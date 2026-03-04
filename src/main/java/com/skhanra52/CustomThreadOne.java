@@ -10,7 +10,7 @@ public class CustomThreadOne extends Thread {
     public void run() {
 //        super.run();
         for(int i=0; i<=5; i++){
-            System.out.println("1");
+            System.out.print("  1  ");
             try{
                 Thread.sleep(1000); // adding 1-sec delay between each count.
             } catch (InterruptedException e) {
