@@ -63,9 +63,10 @@ public class Main {
          The difference between running Thread without passing any parameter in the Thread constructor, and by creating
          Runnable interface.
          Extending the Thread class:--------------
-             The new subclass (customThreadOne class) overrides the Thread's run method, to provide concurrent thread's task.
-             To use this thread, we can create a new instance of the subclass with no argument constructor, and execute
-             the start method on that instance.
+             The new subclass (customThreadOne class) overrides the Thread's run method, to provide concurrent
+             thread's task. To use this thread, we can create a new instance of the subclass with no argument
+             constructor, and execute the start method on that instance.
+
          Advantages:
             -> We have more control over the thread's behavior and properties.
             -> We can access the thread's methods and fields directly from the subclass.
