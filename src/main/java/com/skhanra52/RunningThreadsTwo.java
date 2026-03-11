@@ -8,31 +8,30 @@ import java.util.concurrent.TimeUnit;
 public class RunningThreadsTwo {
     public static void main(String[] args) {
         System.out.println("Main thread is running...");
-        try {
+//        try {
 //            System.out.println("Main thread is paused for one second...");
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
+//            Thread.sleep(1000);
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
+//-----------Checking Thread states-------------------------------------------------------------------------------------
         // The code inside () -> {} is a lambda expression implementing Runnable.
-        Thread thread = new Thread(() -> {
-            String tName = Thread.currentThread().getName();
-            System.out.println(tName + " should take 10 dots to run."); // Thread-0 gets the CPU to execute.
-            for (int i = 0; i < 10; i++){
-                System.out.print(" . ");
-                try {
-                    TimeUnit.SECONDS.sleep(1); // free the CPU for main thread and goes in TIMED_WAITING
+//        Thread thread = new Thread(() -> {
+//            String tName = Thread.currentThread().getName();
+//            System.out.println(tName + " should take 10 dots to run."); // Thread-0 gets the CPU to execute.
+//            for (int i = 0; i < 10; i++){
+//                System.out.print(" . ");
+//                try {
+//                    TimeUnit.SECONDS.sleep(1); // free the CPU for main thread and goes in TIMED_WAITING
 //                    System.out.println("A. State of " +tName + " = " + Thread.currentThread().getState());
-                } catch (InterruptedException e) {
-                    System.out.println("\nWhoops!! " +tName + " interrupted");
-                    Thread.currentThread().interrupt();
+//                } catch (InterruptedException e) {
+//                    System.out.println("\nWhoops!! " +tName + " interrupted");
 //                    System.out.println("A1. state = "+ Thread.currentThread().getState());
-                    return;
-                }
-            }
-            System.out.println("\n" +tName+ " is completed.");
-        });
+//                    return;
+//                }
+//            }
+//            System.out.println("\n" +tName+ " is completed.");
+//        });
 //        System.out.println(thread.getName() + " is starting");
 //        // Ready to run, waiting for CPU, Main thread continues to run as it was already running in the CPU.
 //        thread.start();
@@ -73,10 +72,28 @@ public class RunningThreadsTwo {
          TERMINATED     -> A thread that has exited is in this state.
          */
 
+
+//------------------Example of Join()-----------------------------------------------------------------------------------
         /*
          Imagine that our current thread is downloading and installing a package. When it completes we want to start a
          separate installation thread but only if the download already completed.
          */
+
+        Thread thread = new Thread(() -> {
+            String tName = Thread.currentThread().getName();
+            System.out.println(tName + " should take 10 dots to run."); // Thread-0 gets the CPU to execute.
+            for (int i = 0; i < 10; i++){
+                System.out.print(" . ");
+                try {
+                    TimeUnit.SECONDS.sleep(1); // free the CPU for main thread and goes in TIMED_WAITING
+                } catch (InterruptedException e) {
+                    System.out.println("\nWhoops!! " +tName + " interrupted");
+                    Thread.currentThread().interrupt();
+                    return;
+                }
+            }
+            System.out.println("\n" +tName+ " is completed.");
+        });
 
         Thread installThread = new Thread(() -> {
             String tName = Thread.currentThread().getName();
@@ -114,9 +131,14 @@ public class RunningThreadsTwo {
        /*
         We don't want to run this thread till the previous thread completed. This join method will wait for the main
         thread to complete, and then run the dependent task.
+        -> join() tells the current thread to wait until another thread finishes.
+        -> MAIN THREAD WAITS HERE, subsequence lines in the main thread after thread.join() does not execute till
+           threadMonitor executes.
+        -> So the Main thread state become WAITING.
+
         */
         try {
-            installThread.join();
+            thread.join(); // MAIN THREAD WAITS HERE.
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -127,5 +149,6 @@ public class RunningThreadsTwo {
             System.out.println("Previous thread was interrupted "+
                     installThread.getName() + " can't run");
         }
+        //--------------------------------------------------------------------------------------------------------------
     }
 }

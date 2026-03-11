@@ -90,8 +90,45 @@ public class Main {
             -> Our class(if we create a class) is loosely coupled to the thread class, which makes it easier to maintain
             -> We can use anonymous classes, lambda expression, or method references, to very quickly describe thread
                behaviour.
-
          */
+
+        // Instantiated the CustomThreadTwo here.
+        Thread threadOne = new Thread(new CustomThreadTwo());
+
+        Runnable runnableForSecond= new Runnable() {
+            @Override
+            public void run() {
+                for (int i=0; i<10; i++){
+                    if (i%2!= 0){
+                        System.out.println("Odd number: "+i);
+                        try {
+                            TimeUnit.SECONDS.sleep(1);
+                            if(i >= 7){
+                                Thread.currentThread().interrupt();
+                            }
+                        } catch (InterruptedException e) {
+                            System.out.println("Thread two has been interrupted...");
+                        }
+                    }
+                }
+            }
+        };
+
+        // created second thread by passing runnable to Thread constructor.
+        Thread threadTwo = new Thread(runnableForSecond);
+
+        System.out.println();
+        System.out.println("Thread one is starting...");
+        threadOne.start();
+        System.out.println("Thread two is starting...");
+        threadTwo.start();
+        try {
+            threadTwo.join();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        System.out.println("Main thread wait till threadTwo gets completed.");
     }
 
     public static void printThreadState(Thread thread){
