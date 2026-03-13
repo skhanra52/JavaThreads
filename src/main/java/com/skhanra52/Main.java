@@ -94,7 +94,22 @@ public class Main {
 
         // Instantiated the CustomThreadTwo here.
         Thread threadOne = new Thread(new CustomThreadTwo());
+        Thread threadTwo = getThread();
+        System.out.println();
+        System.out.println("Thread one is starting...");
+        threadOne.start();
+        System.out.println("Thread two is starting...");
+        threadTwo.start();
+        try {
+            threadTwo.join(); // main thread will wait till threadTwo complete
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
 
+        System.out.println("Main thread wait till threadTwo gets completed.");
+    }
+
+    private static Thread getThread() {
         Runnable runnableForSecond= new Runnable() {
             @Override
             public void run() {
@@ -115,20 +130,7 @@ public class Main {
         };
 
         // created second thread by passing runnable to Thread constructor.
-        Thread threadTwo = new Thread(runnableForSecond);
-
-        System.out.println();
-        System.out.println("Thread one is starting...");
-        threadOne.start();
-        System.out.println("Thread two is starting...");
-        threadTwo.start();
-        try {
-            threadTwo.join();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-
-        System.out.println("Main thread wait till threadTwo gets completed.");
+        return new Thread(runnableForSecond);
     }
 
     public static void printThreadState(Thread thread){
