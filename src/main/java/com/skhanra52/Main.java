@@ -14,11 +14,11 @@ public class Main {
         printThreadState(currentThread);
 
         /*------------------------------------------------------------------------------------------------
-         Running the customThread here, TimeUnit.SECONDS.sleep(1); another way to make the thread sleep.
-         imeUnit enum gives us options to provide time in millisecond, second, minute, and hour.
-         We are starting the thread using start() method, it gives us concurrent execution of multiple thread.
-         If we use "customThread.run()" then it will execute the threads synchronously, meaning, the current thread
-         will execute first and followed by next thread.
+         -> Running the customThread here, TimeUnit.SECONDS.sleep(1); another way to make the thread sleep.
+         -> TimeUnit enum gives us options to provide time in millisecond, second, minute, and hour.
+         -> We are starting the thread using start() method, it gives us concurrent execution of multiple thread.
+         -> If we use "customThread.run()" then it will execute the threads synchronously, meaning, the current thread
+            will execute first and followed by next thread.
          */
 
         Thread customThread = new CustomThreadOne();
