@@ -18,9 +18,41 @@ public class MultipleThreadsThree {
 
         /*
          Created three color threads, all tasked to run the countSown method, on a single instance of a stopWatch.
-         Initially, when the loop variable "i" was the local variable, the thread has no conflict with each other.
-         They all successfully count down from the initial starting point. When we used an instance field, however,
-         for the loop variable, the concurrency of the application fell apart.
+         Initially, when the loop variable "i" was the local variable, the threads had no conflict with each other.
+         They all successfully count down from the initial starting point. That is because each local i variable will
+         be there in Thread's stack memory, and Threads does not share their stack memories. This program works because
+         stopWatch object is effectively stateless, meaning, No mutable object present.
+         Only shared variable is timeUnit which is immutable.
+
+         When we used an instance field of StopWatch class(All the threads using single instance of the StopWatch.),
+         however, for the loop variable, the concurrency of the application fell apart. Because now the variable 'i' is
+         a shared variable and can be modified by all the thread concurrently and create a Thread Interference.
+         This problem called --------"Race condition"----------:
+            -> When multiple threads access shared data and the final result depends on execution timing.
+         We can solve this by using
+         1. "Synchronization": public synchronize void countDown(TimeUnit timeUnit){}
+            Now, only one thread can execute this method at a time.  However, threads will lose the parallelism.
+            Code looks like below:
+
+            public synchronized void countDown(int unitCount){
+                this.i = unitCount;
+                for(; i > 0; i--){
+                    timeUnit.sleep(1);
+                    System.out.println(i);
+                }
+            }
+
+            2. "Synchronize" critical Section:
+               -> Instead of locking the entire method lock the critical section.
+                    public void countDown(int unitCount){
+                        synchronized(this){
+                            i = unitCount;
+                            for(; i > 0; i--){
+                                System.out.println(i);
+                            }
+                        }
+                    }
+
          */
         StopWatch stopWatch = new StopWatch(TimeUnit.SECONDS);
         // Thread constructor has been provided "Runnable -> run() -> stopWatch :: countDown" , and "threadName"
@@ -55,10 +87,61 @@ public class MultipleThreadsThree {
 }
 
 
+/*
+  1. Solution 1: It solved race condition by declaring 'i' inside the method due to which each thread will get
+     their individual 'i' instance in the stack.
+ */
+//class StopWatch {
+//    private TimeUnit timeUnit;
+////    int i; // instance of 'i' --> this creates "Race Condition" because in this case all threads shared single
+//             // instance of 'i'
+//
+//    public StopWatch(TimeUnit timeUnit){
+//        this.timeUnit = timeUnit;
+//    }
+//
+//    public void countDown(){
+//        countDown(5);
+//    }
+//
+//    public void countDown(int unitCount){
+//        String threadName = Thread.currentThread().getName();
+//
+//        ThreadColor threadColor = ThreadColor.ANSI_RESET;
+//        try {
+//            /*
+//             String threadName = Thread.currentThread().getName();
+//              converting threadName to Enum,
+//              threadName = "ANSI_GREEN" becomes,
+//              "ThreadColor.valueOf("ANSI_GREEN")" which  "return ThreadColor.ANSI_GREEN"
+//              So now , threadColor = ANSI_GREEN
+//             */
+//            threadColor = ThreadColor.valueOf(threadName);
+//            System.out.println("Thread color: "+threadColor + threadColor.getColor());
+//        } catch (IllegalArgumentException e) {
+//            e.printStackTrace();
+//            // user may pass a bad color name, will just ignore this error.
+//        }
+//
+//        String color = threadColor.getColor();
+//        for (int i=unitCount; i>0; i--){
+//            try{
+//                timeUnit.sleep(1);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
+//            System.out.printf("%s %s Thread : i= %d%n",color, threadName, i);
+//        }
+//    }
+//}
+
+/*
+ Solution 2: Using Synchronization for the method, however,threads parallelism will be lost here. Sequentially all the
+ thread will be executed.
+ */
 class StopWatch {
     private TimeUnit timeUnit;
-//    int i; // instance of "i"
-
+    int i;
     public StopWatch(TimeUnit timeUnit){
         this.timeUnit = timeUnit;
     }
@@ -67,7 +150,7 @@ class StopWatch {
         countDown(5);
     }
 
-    public void countDown(int unitCount){
+    public synchronized void countDown(int unitCount){
         String threadName = Thread.currentThread().getName();
 
         ThreadColor threadColor = ThreadColor.ANSI_RESET;
@@ -87,7 +170,8 @@ class StopWatch {
         }
 
         String color = threadColor.getColor();
-        for (int i=unitCount; i>0; i--){
+        i=unitCount;
+        for (; i>0; i--){
             try{
                 timeUnit.sleep(1);
             } catch (InterruptedException e) {
