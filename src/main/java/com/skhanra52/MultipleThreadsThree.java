@@ -80,6 +80,31 @@ public class MultipleThreadsThree {
             and manage shared access to data, and operation.
             -> Atomicity of Operation: Few operations are truly atomic.
             -> Synchronization is the process of controlling thread's access to share resources.
+         ----------------------------------------------------------------------------
+         Interleaving:
+            -> When multiple threads run concurrently, their instruction can overlap or interleave in the time.
+            -> The execution of multiple thread happens in an arbitrary order.
+            -> The order in which thread executes can't be guaranteed.
+
+         Atomic Action:
+            -> In programming, atomic action is the one, that effectively happens all at once.
+            -> An atomic action either happen completely, or it does not happen.
+            -> Side effect of atomic action are never visible until action completion.
+         Thread safe:
+            -> An object or a block of code is thread safe, if it isn't compromised by the execution of concurrent thread.
+            -> This means, the correctness and consistency of the program's output or its visible state, is unaffected
+               by other threads.
+            -> Atomic operations and immutable objects are example of thread safe code.
+         Memory consistency Error:
+            -> The operating system may read from heap variable and make a copy of the value in each thread's own
+               storage cache.
+            -> Each thread has its own small and fast memory storage, that holds its own copy of a shared resource's value.
+            -> One thread can modify the shared variable, but this change might not be immediately reflected or visible.
+            -> Instead, it's first updated in the thread's local cache.
+            -> The Operating system may not flash the first thread's changes to the heap, until the thread has finished
+               executing.
+               To Demonstrate run the "CachedDataFour.java" file.
+
          */
 
     }
@@ -139,45 +164,85 @@ public class MultipleThreadsThree {
  Solution 2: Using Synchronization for the method, however,threads parallelism will be lost here. Sequentially all the
  thread will be executed.
  */
+//class StopWatch {
+//    private TimeUnit timeUnit;
+//    int i;
+//    public StopWatch(TimeUnit timeUnit){
+//        this.timeUnit = timeUnit;
+//    }
+//
+//    public void countDown(){
+//        countDown(5);
+//    }
+//
+//    public synchronized void countDown(int unitCount){
+//        String threadName = Thread.currentThread().getName();
+//
+//        ThreadColor threadColor = ThreadColor.ANSI_RESET;
+//        try {
+//            /*
+//             String threadName = Thread.currentThread().getName();
+//              converting threadName to Enum,
+//              threadName = "ANSI_GREEN" becomes,
+//              "ThreadColor.valueOf("ANSI_GREEN")" which  "return ThreadColor.ANSI_GREEN"
+//              So now , threadColor = ANSI_GREEN
+//             */
+//            threadColor = ThreadColor.valueOf(threadName);
+//            System.out.println("Thread color: "+threadColor + threadColor.getColor());
+//        } catch (IllegalArgumentException e) {
+//            e.printStackTrace();
+//            // user may pass a bad color name, will just ignore this error.
+//        }
+//
+//        String color = threadColor.getColor();
+//        i=unitCount;
+//        for (; i>0; i--){
+//            try{
+//                timeUnit.sleep(1);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
+//            System.out.printf("%s %s Thread : i= %d%n",color, threadName, i);
+//        }
+//    }
+//}
+
+/*
+ Solution 3: Using Synchronization for the critical logic.
+ */
+
 class StopWatch {
-    private TimeUnit timeUnit;
-    int i;
-    public StopWatch(TimeUnit timeUnit){
+    TimeUnit timeUnit;
+
+    StopWatch(TimeUnit timeUnit){
         this.timeUnit = timeUnit;
     }
 
-    public void countDown(){
-        countDown(5);
+    void countDown(){
+        this.countDown(5);
     }
 
-    public synchronized void countDown(int unitCount){
+    void countDown(int unitCount ){
         String threadName = Thread.currentThread().getName();
-
         ThreadColor threadColor = ThreadColor.ANSI_RESET;
         try {
-            /*
-             String threadName = Thread.currentThread().getName();
-              converting threadName to Enum,
-              threadName = "ANSI_GREEN" becomes,
-              "ThreadColor.valueOf("ANSI_GREEN")" which  "return ThreadColor.ANSI_GREEN"
-              So now , threadColor = ANSI_GREEN
-             */
             threadColor = ThreadColor.valueOf(threadName);
             System.out.println("Thread color: "+threadColor + threadColor.getColor());
         } catch (IllegalArgumentException e) {
             e.printStackTrace();
-            // user may pass a bad color name, will just ignore this error.
         }
 
         String color = threadColor.getColor();
-        i=unitCount;
-        for (; i>0; i--){
-            try{
-                timeUnit.sleep(1);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+        synchronized(this){
+            int i = unitCount;
+            for(; i > 0; i--){
+                try{
+                    timeUnit.sleep(1);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                System.out.printf("%s %s Thread : i= %d%n",color, threadName, i);
             }
-            System.out.printf("%s %s Thread : i= %d%n",color, threadName, i);
         }
     }
 }
