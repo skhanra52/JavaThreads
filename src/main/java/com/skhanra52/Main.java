@@ -60,10 +60,11 @@ public class Main {
         newThread.start();
 
         /*
-         The difference between running Thread without passing any parameter in the Thread constructor, and by creating
-         Runnable interface.
+         The difference between running Thread without passing any parameter in the Thread constructor
+         (ie, subclass extends Thread class ), and by creating Runnable interface.
+
          Extending the Thread class:--------------
-             The new subclass (customThreadOne class) overrides the Thread's run method, to provide concurrent
+             The new subclass (customThreadOne class) overrides the Thread's run method to provide concurrent
              thread's task. To use this thread, we can create a new instance of the subclass with no argument
              constructor, and execute the start method on that instance.
 
@@ -106,7 +107,7 @@ public class Main {
             throw new RuntimeException(e);
         }
 
-        System.out.println("Main thread wait till threadTwo gets completed.");
+        System.out.println("Main thread waits till threadTwo gets completed.");
     }
 
     private static Thread getThread() {

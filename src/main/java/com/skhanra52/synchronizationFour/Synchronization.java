@@ -29,7 +29,7 @@ public class Synchronization {
         Thread thread1 = new Thread(() -> companyAccount.withdraw(25000), "Thread-1");
         Thread thread2 = new Thread(() -> companyAccount.deposit(50000), "Thread-2");
         Thread thread3 = new Thread(() -> companyAccount.withdraw(25000), "Thread-3");
-        Thread thread4 = new Thread(() -> companyAccount.withdraw(50000), "Thread-4");
+        Thread thread4 = new Thread(() -> companyAccount.withdraw(25000), "Thread-4");
 
         thread1.start();
         thread2.start();
@@ -44,6 +44,7 @@ public class Synchronization {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+        // below system.out present in the main thread which will wait till all the four thread finish execution.
         System.out.println("\nCompany's final balance: "+ companyAccount.getBalance());
      }
 }
