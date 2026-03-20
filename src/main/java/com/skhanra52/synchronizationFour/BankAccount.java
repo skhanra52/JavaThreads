@@ -92,7 +92,7 @@ public class BankAccount {
     }
 
     /*
-     The Object instance monitor:--(Synchronized method, how it works)---------------------------------------
+     The Object instance monitor:-(Synchronized method, how it works)---------------------------------------
 
      -> Every object instance in Java has a built-in intrinsic lock, also known as a monitor lock.
      -> A thread acquires a lock by executing a synchronized method on the instance, or by using the instance as the
@@ -107,7 +107,5 @@ public class BankAccount {
         -> The Synchronized statement, usually the better option in most circumstances since, it limits the scope of
            synchronization, to the critical section of code.
            In other word, It gives you more granular control over when you want other threads to block.
-
-
      */
 }

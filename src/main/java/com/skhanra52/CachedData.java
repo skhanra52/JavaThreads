@@ -40,7 +40,7 @@ public class CachedData {
         /*
          The second thread that is "readThread" will never start because the flag status will not reflect immediately
          after that toggle, it will go and get stored in thread's cache memory which is local to thread.
-         So readThread local cache isn't getting updated with the modified flag value. will read the flag
+         So readThread local cache isn't getting updated with the modified flag value, will read the flag
          as if the state of it didn't change. This called memory inconsistency. As a result, the readThread will get
          stuck in its loop indefinitely waiting for the flag to become true.
          For More Detail check in MultipleThreadsThree class "Memory Consistency Error" section.
@@ -51,7 +51,7 @@ public class CachedData {
          -------------------------------------------------------------------------------
          Volatile Modifier:
             -> The "volatile" keyword used as a modifier to the class variables.
-            -> It's an indicator that the variable value me be modified by multiple threads.
+            -> It's an indicator that the variable value may be modified by multiple threads.
             -> This modifier ensures that the variable is always read from, and write to the main memory rather than
                from any thread specific caches.
             -> This provides memory consistency for this variable's value across the threads.
