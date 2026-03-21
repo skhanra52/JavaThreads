@@ -16,7 +16,7 @@ class MessageRepository {
      * Methods that read the message, as well as write to it, or populate it. Because the message is a shared resource,
      * we'll synchronize the read method. When the consumer class calls this method, it will wait until there's a message
      * to read. We'll set this up with a while loop on the Message flag.
-     * -> If there's no message, it will stay in this while loop. I'll just make this an empty block.
+     * -> If there's no message, it will stay in this while loop. We'll just make this an empty block.
      * -> Once the message is successfully retrieved, this code will set hasMessage to false.
      * -> Finally, the method returns the message to the consumer, who's waiting for it.
      */
@@ -42,17 +42,16 @@ class MessageRepository {
     }
 }
 
-// Producer class
-class MessageWriter implements Runnable {
+// Producer class to implement deadlock situation demo
+class MessageWriterWithDeadLock implements Runnable {
     private MessageRepository outgoingMessage;
     private final String text = """
-            Humpty Dumpty sat on a wall,
-            Humpty Dumpty had a great fall,
+            Humpty Dumpty sat on a wall, Humpty Dumpty had a great fall,
             All the king's horses and so on.
             Couldn't put Humpty together again.
             """;
 
-    public MessageWriter(MessageRepository outgoingMessage) {
+    public MessageWriterWithDeadLock(MessageRepository outgoingMessage) {
         this.outgoingMessage = outgoingMessage;
     }
 
@@ -75,11 +74,11 @@ class MessageWriter implements Runnable {
     }
 }
 
-// consumer class
-class MessageReader implements Runnable {
+// consumer class to implement deadlock situation.
+class MessageReaderWithDeadLock implements Runnable {
     private MessageRepository incomingMessage;
 
-    public MessageReader(MessageRepository incomingMessage) {
+    public MessageReaderWithDeadLock(MessageRepository incomingMessage) {
         this.incomingMessage = incomingMessage;
     }
 
@@ -109,8 +108,8 @@ class MessageReader implements Runnable {
 
  DeadLock:
     A deadlock usually occurs, when you have two or more threads accessing multiple shared resources.
-    Thread A is our Consumer, the MesssageReader. It can usually get in, to run the read method, because the hasMessage
-    flag is usually true. So when that flag is true, it won't go into the while loop.
+    Thread A is our Consumer, the MesssageReaderWithDeadLock. It can usually get in, to run the read method,
+    because the hasMessage flag is usually true. So when that flag is true, it won't go into the while loop.
     But If for some reason, the flag is false, it will execute it's while loop, and that's where the problem lies.
     It's waiting on that hasMessage flag to change value, to exit the loop.
     But because of the way this code is currently written, That flag is never going to change its value.
@@ -121,18 +120,26 @@ class MessageReader implements Runnable {
     and the resolution isn't always pretty. In this case, I have to shut down the application, or kill it manually.
     This situation could be equally true in reverse. This means the Producer could be in its while loop, waiting on
     the Consumer to flip the flag, but the Consumer can't get the lock to do it. So what can we do?
-
  */
 
 public class ConsumerProducer {
 
     public static void main(String[] args) {
         MessageRepository messageRepository = new MessageRepository();
-        Thread reader = new Thread(new MessageReader(messageRepository), "Thread A");
-        Thread writer = new Thread(new MessageWriter(messageRepository), "Thread B");
+        Thread reader = new Thread(new MessageReaderWithDeadLock(messageRepository), "Thread A");
+        Thread writer = new Thread(new MessageWriterWithDeadLock(messageRepository), "Thread B");
 
         reader.start();
         writer.start();
     }
 }
+
+/*
+ The Object class's wait, notify and notifyAll methods: ---------------------------
+    -> The wait, notify and notifyAll methods are used to manage some monitor lock situations to prevent threads from
+       blocking indefinitely.
+    -> Because these methods are in Object class, any instance of any class can execute these methods, from within a
+       synchronized method or statement.
+       
+ */
 
