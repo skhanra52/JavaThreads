@@ -22,9 +22,16 @@ class MessageRepository {
      */
     public synchronized String read() {
         while(!hasMessage){
-
+            // added the wait in side loop to check the condition to satisfied, as notifyAll() awakens all threads
+            // at a time. If we remove this wait() the code will get hanged.
+            try {
+                wait();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
         }
         hasMessage = false;
+        notifyAll();
         return message;
     }
 
@@ -35,9 +42,14 @@ class MessageRepository {
      */
     public synchronized void write(String message) {
         while (hasMessage){
-
+            try {
+                wait();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
         }
         hasMessage = true;
+        notifyAll();
         this.message = message;
     }
 }
@@ -135,11 +147,67 @@ public class ConsumerProducer {
 }
 
 /*
- The Object class's wait, notify and notifyAll methods: ---------------------------
-    -> The wait, notify and notifyAll methods are used to manage some monitor lock situations to prevent threads from
-       blocking indefinitely.
-    -> Because these methods are in Object class, any instance of any class can execute these methods, from within a
+ The Object class's wait(), notify() and notifyAll() methods: ---------------------------
+    -> The wait(), notify() and notifyAll() methods are used to manage some monitor lock situations to prevent threads
+       from blocking indefinitely.
+    -> Because these methods are in Object class, any instance of any class can execute these methods from within a
        synchronized method or statement.
-       
+    -> The wait() method in java is an instance of java.long.Object class that is used for inter-thread communication.
+       It is typically called inside a synchronized block or method and causes the current thread to pause until
+       another thread calls notify() or notifyAll() method on the same object.
+
+    What wait() does ?---------------
+    -> Puts the current thread into a waiting state on the current object monitor.
+    -> The thread releases the lock hold on that object, so that the other thread can enter the synchronized block of
+       the code after notify() from the other thread.
+    -> The thread resumes only when:
+        -> Another thread calls notify() or notifyAll() method on the same Object, or
+        -> The waiting time(if a timeout given) expires or
+        -> It is interrupted(throws InterruptedException).
+     -> wait() has three overloaded versions
+        public final void wait() throws InterruptedException
+        public final void wait(long timeout) throws InterruptedException
+        public final void wait(long timeout, int nanos) trows InterruptedException
+
+        Typical usage pattern:
+        Because of possible spurious awakened (threads waking up without notify()), wait() is usually
+        placed inside a loop:
+
+        synchronized (lock) {
+            while (condition == false) {
+                lock.wait(1000);   // or wait(), wait(1000, 500000)
+            }
+            // now condition is true, proceed
+        }
+
+        On the notifying side:---------
+
+        synchronized (lock) {
+            condition = true;
+            lock.notify();   // or notifyAll()
+        }
+
+        notify() method : ---------------------------------------------------
+
+        public final void notify() throws InterruptedException
+
+        It wakes up a single thread that is waiting on this object's monitor. If any thread is waiting on this object,
+        One of them would be chosen to be awakened. The choice is arbitrary and occurs at the discretion of the implementation.
+        A thread waits on an Object's monitor by calling one of the wait() method.
+
+        The awakened thread will not be able to proceed until the current thread relinquishes the lock on this object.
+        Awakened thread will compete in the usual manner with any other threads that might be actively competing to
+        synchronize on this object. For Example: The awakened thread enjoys no reliable privilege or disadvantage in
+        being the next thread to lock this object.
+
+        The notify() method should be called only by the owner of the object's monitor. A thread becomes the owner of
+        the object's monitor in one of the three ways:
+            1. By executing a synchronized instance method of that object.
+            2. By executing the body of the synchronized statement that synchronizes on that object.
+            3. For object of type class, by executing the synchronized static method of that class.
+            Only one thread at a time can own the object monitor.
+
+
+
  */
 
