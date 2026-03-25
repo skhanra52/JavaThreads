@@ -25,12 +25,12 @@ class MessageRepository {
             // added the wait in side loop to check the condition to satisfied, as notifyAll() awakens all threads
             // at a time. If we remove this wait() the code will get hanged.
             try {
-                wait();
+                wait();  // don't have message then waits after releasing lock
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
         }
-        hasMessage = false;
+        hasMessage = false; // indicates message is read and no new message available.
         notifyAll();
         return message;
     }
@@ -43,12 +43,12 @@ class MessageRepository {
     public synchronized void write(String message) {
         while (hasMessage){
             try {
-                wait();
+                wait();     // Has message to read, then waits till message is read to produce new message.
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
         }
-        hasMessage = true;
+        hasMessage = true; // indicates new message available to read.
         notifyAll();
         this.message = message;
     }
@@ -101,21 +101,21 @@ class MessageReaderWithDeadLock implements Runnable {
         String latestMessage = "";
         do {
             try {
-                // put the thread to sleep first. This gives the writer  a bit of time to get its message out there,
+                // put the thread to sleep first. This gives the writer a bit of time to get its message out there,
                 // before this code attempts to read it.
                 Thread.sleep(random.nextInt(500, 2000));
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
             latestMessage = this.incomingMessage.read();
-            System.out.println(latestMessage);
+            System.out.println("latest Message........."+"\n"+latestMessage);
         } while (!latestMessage.equals("Finished"));
 
     }
 }
 /*
  Continuation from SynchronizationFour...
- wait and notify methods that are defined on the object class and used when the thread acquire the monitor lock.
+ wait and notify methods that are defined on the Object class and used when the thread acquire the monitor lock.
  If we run the main, it may hang, we need to manually stop the program. This is due to deadlock, live lock, starvation.
 
  DeadLock:
@@ -123,7 +123,7 @@ class MessageReaderWithDeadLock implements Runnable {
     Thread A is our Consumer, the MesssageReaderWithDeadLock. It can usually get in, to run the read method,
     because the hasMessage flag is usually true. So when that flag is true, it won't go into the while loop.
     But If for some reason, the flag is false, it will execute it's while loop, and that's where the problem lies.
-    It's waiting on that hasMessage flag to change value, to exit the loop.
+    It waits for that hasMessage flag to change value, to exit the loop.
     But because of the way this code is currently written, That flag is never going to change its value.
     Thread A has acquired a lock on the shared resource, in this case the Message Repository,
     and Thread B can't get that lock, so it's blocked. Because Thread B is blocked, it can't change the flag,
