@@ -2,6 +2,8 @@ package com.skhanra52.ConsumerProducerFive;
 
 
 import java.util.Random;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 class MessageRepository {
     // Both producer and consumer will interact with the message.
@@ -12,6 +14,8 @@ class MessageRepository {
      */
     private boolean hasMessage = false;
 
+    private final Lock lock = new ReentrantLock();
+
     /**
      * Methods that read the message, as well as write to it, or populate it. Because the message is a shared resource,
      * we'll synchronize the read method. When the consumer class calls this method, it will wait until there's a message
@@ -20,18 +24,38 @@ class MessageRepository {
      * -> Once the message is successfully retrieved, this code will set hasMessage to false.
      * -> Finally, the method returns the message to the consumer, who's waiting for it.
      */
-    public synchronized String read() {
-        while(!hasMessage){
-            // added the wait in side loop to check the condition to satisfied, as notifyAll() awakens all threads
-            // at a time. If we remove this wait() the code will get hanged.
-            try {
-                wait();  // don't have message then waits after releasing lock
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
+//    public synchronized String read() {
+//        while(!hasMessage){
+//            // added the wait in side loop to check the condition to satisfied, as notifyAll() awakens all threads
+//            // at a time. If we remove this wait() the code will get hanged.
+//            try {
+//                wait();  // don't have message then waits after releasing lock
+//            } catch (InterruptedException e) {
+//                throw new RuntimeException(e);
+//            }
+//        }
+//        hasMessage = false; // indicates message is read and no new message available.
+//        notifyAll();
+//        return message;
+//    }
+
+    /*
+     Example of lock.lock() and lock.unlock() method.
+     */
+    public String read() {
+        lock.lock();
+        try {
+            while(!hasMessage){
+                try {
+                   Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
             }
+            hasMessage = false; // indicates message is read and no new message available.
+        } finally {
+            lock.unlock();
         }
-        hasMessage = false; // indicates message is read and no new message available.
-        notifyAll();
         return message;
     }
 
@@ -73,7 +97,6 @@ class MessageWriterWithDeadLock implements Runnable {
         //  We can get the lines of text, by splitting the text block by the new line character.
         Random random = new Random();
         String[] lines = text.split("\n");
-
         for (int i=0; i<lines.length; i++){
             outgoingMessage.write(lines[i]);
             try {
@@ -96,7 +119,6 @@ class MessageReaderWithDeadLock implements Runnable {
 
     @Override
     public void run() {
-
         Random random = new Random();
         String latestMessage = "";
         do {
@@ -110,7 +132,6 @@ class MessageReaderWithDeadLock implements Runnable {
             latestMessage = this.incomingMessage.read();
             System.out.println("latest Message........."+"\n"+latestMessage);
         } while (!latestMessage.equals("Finished"));
-
     }
 }
 /*
@@ -141,6 +162,26 @@ public class ConsumerProducer {
         Thread reader = new Thread(new MessageReaderWithDeadLock(messageRepository), "Thread A");
         Thread writer = new Thread(new MessageWriterWithDeadLock(messageRepository), "Thread B");
 
+        /*
+          We can test "setUncaughtExceptionhandler" by removing "synchronized" key word from the reader's read method.
+          and by keeping the wait() and notifyAll() method inside, which will produce the IllegalMonitorStateException
+          which would be handled gracefully with the below code.
+         */
+        writer.setUncaughtExceptionHandler((thread, exc) -> {
+            System.out.println("Writer had exception "+exc);
+            if(reader.isAlive()){
+                System.out.println("Going to interrupt the reader.");
+                reader.interrupt();
+            }
+        });
+
+        reader.setUncaughtExceptionHandler((thread, exc) -> {
+            System.out.println("Reader had exception "+exc);
+            if(writer.isAlive()){
+                System.out.println("Going to interrupt the writer.");
+                writer.interrupt();
+            }
+        });
         reader.start();
         writer.start();
     }
@@ -148,6 +189,7 @@ public class ConsumerProducer {
 
 /*
  The Object class's wait(), notify() and notifyAll() methods: ---------------------------
+    ALL THESE METHODS MUST BE CALLED INSIDE SYNCHRONIZED METHOD OR STATEMENT:------------
     -> The wait(), notify() and notifyAll() methods are used to manage some monitor lock situations to prevent threads
        from blocking indefinitely.
     -> Because these methods are in Object class, any instance of any class can execute these methods from within a
