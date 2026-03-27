@@ -2,6 +2,7 @@ package com.skhanra52.ConsumerProducerFive;
 
 
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -40,21 +41,26 @@ class MessageRepository {
 //    }
 
     /*
-     Example of lock.lock() and lock.unlock() method.
+     Example of lock.lock(),lock.tryLock() and lock.unlock() method.
      */
     public String read() {
-        lock.lock();
-        try {
-            while(!hasMessage){
-                try {
-                   Thread.sleep(500);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
+//        lock.lock(); // this will take to deadlock.
+        if(lock.tryLock()){
+            try {
+                while(!hasMessage){
+                    try {
+                       Thread.sleep(500);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
+                hasMessage = false; // indicates message is read and no new message available.
+            } finally {
+                lock.unlock();
             }
-            hasMessage = false; // indicates message is read and no new message available.
-        } finally {
-            lock.unlock();
+        }else {
+            System.out.println("** read blocked");
+            hasMessage = false;
         }
         return message;
     }
@@ -64,16 +70,41 @@ class MessageRepository {
      * a message in the message repository, it will hang out and wait, presumably until the Consumer has a
      * chance to read the message, and set this flag to false.
      */
-    public synchronized void write(String message) {
-        while (hasMessage){
-            try {
-                wait();     // Has message to read, then waits till message is read to produce new message.
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
+//    public synchronized void write(String message) {
+//        while (hasMessage){
+//            try {
+//                wait();     // Has message to read, then waits till message is read to produce new message.
+//            } catch (InterruptedException e) {
+//                throw new RuntimeException(e);
+//            }
+//        }
+//        hasMessage = true; // indicates new message available to read.
+//        notifyAll();
+//        this.message = message;
+//    }
+
+    public void write(String message) {
+        try {
+            if (lock.tryLock(3, TimeUnit.SECONDS)) { // try for 3 secs to acquire the lock
+                try {
+                    while (hasMessage) {
+                        try {
+                            Thread.sleep(500);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                    hasMessage = true; // indicates new message available to read.
+                } finally {
+                    lock.unlock();
+                }
+            } else {
+                System.out.println("**Write Blocked");
+                hasMessage = true;
             }
+        }catch (InterruptedException e){ // before timeout can be interrupted.
+            throw new RuntimeException(e);
         }
-        hasMessage = true; // indicates new message available to read.
-        notifyAll();
         this.message = message;
     }
 }
