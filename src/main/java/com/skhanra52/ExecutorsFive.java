@@ -22,9 +22,65 @@ which provides the following benefits:
  -> Scheduled implementations exist to further help with management workflows.
 */
 
+import java.util.concurrent.Executors;
+
 public class ExecutorsFive {
 
     public static void main(String[] args) {
+        var blueExecutor = Executors.newSingleThreadExecutor();
+        blueExecutor.execute(ExecutorsFive::countDown);
+        blueExecutor.shutdown();
+    }
 
+    // without executorService, if you want to run below main rename the "notMain" to main.
+    public static void notMain(String[] args) {
+
+        Thread blue = new Thread(
+                ExecutorsFive::countDown,  ThreadColor.ANSI_BLUE.name());
+
+        Thread yellow = new Thread(
+                ExecutorsFive::countDown, ThreadColor.ANSI_YELLOW.name());
+
+        Thread red = new Thread(
+                ExecutorsFive::countDown, ThreadColor.ANSI_RED.name());
+
+        // Arranging start and join respectively will produce synchronous output, one after another.
+        blue.start();
+        try {
+            blue.join();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        yellow.start();
+        try {
+            yellow.join();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        red.start();
+        try {
+            red.join();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    private static void countDown(){
+        String threadName = Thread.currentThread().getName();
+        var threadColor = ThreadColor.ANSI_RESET;
+        try{
+            threadColor = ThreadColor.valueOf(threadName.toUpperCase());
+        } catch (IllegalArgumentException ignore) {
+            // User may pass a bad color name, will just ignore this kind of error.
+        }
+
+        String color = threadColor.getColor();
+        for(int i=20; i>=0; i--){
+            System.out.println(color + " " +
+                    threadName.replace("ANSI_", "") + " " + i);
+        }
     }
 }
