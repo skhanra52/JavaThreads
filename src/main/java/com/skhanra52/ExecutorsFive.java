@@ -23,13 +23,72 @@ which provides the following benefits:
 */
 
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+
+/**
+ * Class to pass the thread name in newSingleThreadExecutor(). Created the factory method to pass the name.
+ * SingleThreadExecutor can be used to create a multithreaded environment by executing multiple of them.
+ *  blueExecutor.shutdown() and other shutdown() will wait till the all the thread execution or till
+ *  we get any exception.
+ */
+class ColorThreadFactory implements ThreadFactory{
+    private String threadName;
+
+    public ColorThreadFactory(ThreadColor color){
+        this.threadName = color.name();
+    }
+
+    @Override
+    public Thread newThread(Runnable r) {
+        Thread thread = new Thread(r);
+        thread.setName(threadName);
+        return thread;
+    }
+}
 
 public class ExecutorsFive {
 
     public static void main(String[] args) {
-        var blueExecutor = Executors.newSingleThreadExecutor();
+//        var blueExecutor = Executors.newSingleThreadExecutor(); // here we can not pass name directly.
+        var blueExecutor = Executors.newSingleThreadExecutor(
+                new ColorThreadFactory(ThreadColor.ANSI_BLUE));
         blueExecutor.execute(ExecutorsFive::countDown);
         blueExecutor.shutdown();
+        boolean isDone = false;
+        try {
+            isDone = blueExecutor.awaitTermination(5000, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        if(isDone){
+            System.out.println("Blue thread executed successfully, yellow thread started running");
+            var yellowExecutor = Executors.newSingleThreadExecutor(
+                    new ColorThreadFactory(ThreadColor.ANSI_YELLOW));
+            yellowExecutor.execute(ExecutorsFive::countDown);
+            yellowExecutor.shutdown();
+            try {
+                isDone = yellowExecutor.awaitTermination(500, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            if (isDone){
+                System.out.println("Yellow thread executed successfully, Red thread started running");
+                var redExecutor = Executors.newSingleThreadExecutor(
+                        new ColorThreadFactory(ThreadColor.ANSI_RED));
+                redExecutor.execute(ExecutorsFive::countDown);
+                redExecutor.shutdown();
+                try {
+                    isDone = redExecutor.awaitTermination(500, TimeUnit.MILLISECONDS);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                if(isDone){
+                    System.out.println("All the threads executed successfully");
+                }
+            }
+        }
     }
 
     // without executorService, if you want to run below main rename the "notMain" to main.
