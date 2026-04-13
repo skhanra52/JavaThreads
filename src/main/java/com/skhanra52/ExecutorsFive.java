@@ -22,6 +22,17 @@ which provides the following benefits:
  -> Scheduled implementations exist to further help with management workflows.
 */
 
+/*
+ -----What Production-Grade really means here-------------------
+ When we use ExecutorService in real systems, we care about:
+    1. Thread Management(No Leaks)
+    2. Proper pool sizing(Not random numbers)
+    3. Graceful shutdown
+    4. Error Handling(important)
+    5. Avoiding shared mutable state issues
+    6. Observability(logging, debugging)
+
+ */
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
