@@ -58,6 +58,12 @@ class ColorThreadFactory implements ThreadFactory{
     }
 }
 
+/**
+ * Implementation of singleThreaded executor service, where single execution service handling
+ * one thread at a time. The threads have been passed to executor service one by one and waited till
+ * the task is finish after executor service shutdown using awaitTermination(500,MILLISECONDS)
+ */
+
 public class ExecutorsFive {
 
     public static void main(String[] args) {
@@ -65,8 +71,14 @@ public class ExecutorsFive {
         var blueExecutor = Executors.newSingleThreadExecutor(
                 new ColorThreadFactory(ThreadColor.ANSI_BLUE));
         blueExecutor.execute(ExecutorsFive::countDown);
+
+        // stop accepting new tasks
         blueExecutor.shutdown();
         boolean isDone = false;
+
+        // Wait for existing tasks to complete. It works only after executor.shutdown() else no use.
+        // It waits 500 milliseconds after termination of service. await termination returns boolean
+        // It blocks calling other threads for 500 milliseconds, usually main thread.
         try {
             isDone = blueExecutor.awaitTermination(5000, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
