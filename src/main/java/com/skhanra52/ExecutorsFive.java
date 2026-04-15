@@ -3,7 +3,7 @@ package com.skhanra52;
 Managing Threads:
 These are the ExecutorService classes, and they exist to manage the creating and execution of threads.
 Managing Individual thread:
-When using the Thread class, we would have rudimentary(very Basis) control over the thread.
+When using the Thread class, we would have rudimentary(very Basic) control over the thread.
 -> We can interrupt a thread and join it to another thread.
 -> We can name the thread, try to prioritize it, and start it manually one at a time.
 -> We can also pass it an UncaughtExceptionHandler, to deal with exception that happen in a thread.
@@ -45,15 +45,26 @@ import java.util.concurrent.TimeUnit;
  */
 class ColorThreadFactory implements ThreadFactory{
     private String threadName;
+    private int colorValue = 1;
 
     public ColorThreadFactory(ThreadColor color){
         this.threadName = color.name();
     }
 
+    public ColorThreadFactory(){}
+
     @Override
     public Thread newThread(Runnable r) {
         Thread thread = new Thread(r);
-        thread.setName(threadName);
+        String name = threadName;
+        if(name == null){
+            name = ThreadColor.values()[colorValue].name();
+        }
+        if(++colorValue > (ThreadColor.values().length - 1)){
+            colorValue = 1;
+        }
+//        thread.setName(threadName);
+        thread.setName(name);
         return thread;
     }
 }
@@ -61,12 +72,44 @@ class ColorThreadFactory implements ThreadFactory{
 /**
  * Implementation of singleThreaded executor service, where single execution service handling
  * one thread at a time. The threads have been passed to executor service one by one and waited till
- * the task is finish after executor service shutdown using awaitTermination(500,MILLISECONDS)
+ * the task is finished after executor service shutdown(stop taking task) using executor.shutdown().
+ * executor.awaitTermination(500,MILLISECONDS) (wait till the existing tasks to complete),
+ * awaitTermination does NOT stop threads.
+ * ------------
+ * How it actually works internally-----------
+ * 1. shutdown() is called
+ *      No new tasks allowed
+ *      Existing tasks continue
+ * 2. awaitTermination(...) is called
+ *      Main thread goes into waiting state
+ *  It checks:
+ *      Have all worker threads finished?
+ *      Has 500 ms elapsed?
  */
 
 public class ExecutorsFive {
 
     public static void main(String[] args) {
+        int count = 6; // number of tasks we would like to run
+        // 3 threads would be created to execute 6 tasks. 3
+        // When six tasks were submitted, the three threads were used to execute the first three tasks,
+        // and then reused to execute the second three tasks. This is where the FixedThreadPool gets its name.
+        // It will only ever create, at a maximum, the number of threads we specify,
+        // regardless of the number of tasks submitted.
+        var multiExecutor = Executors.newFixedThreadPool(3, new ColorThreadFactory());
+
+        for (int i=0; i < count; i++){
+            multiExecutor.execute(ExecutorsFive::countDown);
+        }
+        multiExecutor.shutdown();
+    }
+
+    /*
+     if you want to run below main rename the "singleThreadMain" to main.
+     this is example of how to execute multiple threads in sequence using
+     serviceExecutor.shutdown() and executor.awaitTermination()
+     */
+    public static void singleThreadMain(String[] args) {
 //        var blueExecutor = Executors.newSingleThreadExecutor(); // here we can not pass name directly.
         var blueExecutor = Executors.newSingleThreadExecutor(
                 new ColorThreadFactory(ThreadColor.ANSI_BLUE));
@@ -114,7 +157,10 @@ public class ExecutorsFive {
         }
     }
 
-    // without executorService, if you want to run below main rename the "notMain" to main.
+    /*
+     without executorService, if you want to run below main rename the "notMain" to main.
+     This is example of how to execute multiple threads in sequence using thread.start() and thread.join()
+     */
     public static void notMain(String[] args) {
 
         Thread blue = new Thread(
