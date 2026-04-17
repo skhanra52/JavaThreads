@@ -87,19 +87,54 @@ class ColorThreadFactory implements ThreadFactory{
  *      Has 500 ms elapsed?
  */
 
-public class ExecutorsFive {
+public class ExecutorsSix {
 
     public static void main(String[] args) {
         int count = 6; // number of tasks we would like to run
-        // 3 threads would be created to execute 6 tasks. 3
-        // When six tasks were submitted, the three threads were used to execute the first three tasks,
-        // and then reused to execute the second three tasks. This is where the FixedThreadPool gets its name.
-        // It will only ever create, at a maximum, the number of threads we specify,
-        // regardless of the number of tasks submitted.
+        /*
+         3 threads would be created to execute 6 tasks. 3
+         When six tasks were submitted, the three threads were used to execute the first three tasks,
+         and then reused to execute the second three tasks. This is where the FixedThreadPool gets its name.
+         It will only ever create, at a maximum, the number of threads we specify,
+         regardless of the number of tasks submitted.
+
+         Creating Threads is expensive:
+            -> Creating threads, destroying threads, and then creating them again is expensive.
+            -> A threads pool mitigates the cost, by keeping a set of threads around, in a pool for current
+               and future work.
+            -> Threads, once they complete one task, can be reassigned to another task without the expense of
+               destroying that thread and creating a new one.
+          Mechanics of a thread pool:
+            -> A threads pool consists of three components.
+               1. Worker threads: They are available in a pool to execute tasks. They are pre-created and kept
+                  alive, throughout the lifetime of the application.
+               2. Submitted tasks: They are placed in a First in first out queue. Threads pop tasks from the
+                  queue and execute them, so they are executed in order they are submitted.
+               3. The threads pool manager: allocates tasks to threads and ensure proper threads synchronization.
+           Java's threads Pool classes:
+           Class               |        Description                                 |     executors method
+           --------------------------------------------------------------------------------------------------
+           FixedThreadPool     | Has a fixed number of threads.                     | newFixedThreadPool()
+           --------------------------------------------------------------------------------------------------
+           CachedThreadPool    | Creates new threads as needed, so it's a variable  | newCachedThreadPool()
+                               | size pool                                          |
+           -------------------------------------------------------------------------------------------------- 
+           ScheduledThreadPool | Can schedule tasks to run at a specific time or    | newScheduledThreadsPool()
+                               | repeatedly at regular intervals.                   |
+           ----------------------------------------------------------------------------------------------------
+           WorkStealingPool    | Usages a work stealing algorithm to distribute task| newWorkStealingPool()
+                               | among the threads in the pool                      |
+           ----------------------------------------------------------------------------------------------------
+           ForkJoinPool        | Specialized WorkStealingPool for executing forkJoin| n/a
+                               | task.                                              |
+           ----------------------------------------------------------------------------------------------------
+
+
+         */
         var multiExecutor = Executors.newFixedThreadPool(3, new ColorThreadFactory());
 
         for (int i=0; i < count; i++){
-            multiExecutor.execute(ExecutorsFive::countDown);
+            multiExecutor.execute(ExecutorsSix::countDown);
         }
         multiExecutor.shutdown();
     }
@@ -113,7 +148,7 @@ public class ExecutorsFive {
 //        var blueExecutor = Executors.newSingleThreadExecutor(); // here we can not pass name directly.
         var blueExecutor = Executors.newSingleThreadExecutor(
                 new ColorThreadFactory(ThreadColor.ANSI_BLUE));
-        blueExecutor.execute(ExecutorsFive::countDown);
+        blueExecutor.execute(ExecutorsSix::countDown);
 
         // stop accepting new tasks
         blueExecutor.shutdown();
@@ -132,7 +167,7 @@ public class ExecutorsFive {
             System.out.println("Blue thread executed successfully, yellow thread started running");
             var yellowExecutor = Executors.newSingleThreadExecutor(
                     new ColorThreadFactory(ThreadColor.ANSI_YELLOW));
-            yellowExecutor.execute(ExecutorsFive::countDown);
+            yellowExecutor.execute(ExecutorsSix::countDown);
             yellowExecutor.shutdown();
             try {
                 isDone = yellowExecutor.awaitTermination(500, TimeUnit.MILLISECONDS);
@@ -143,7 +178,7 @@ public class ExecutorsFive {
                 System.out.println("Yellow thread executed successfully, Red thread started running");
                 var redExecutor = Executors.newSingleThreadExecutor(
                         new ColorThreadFactory(ThreadColor.ANSI_RED));
-                redExecutor.execute(ExecutorsFive::countDown);
+                redExecutor.execute(ExecutorsSix::countDown);
                 redExecutor.shutdown();
                 try {
                     isDone = redExecutor.awaitTermination(500, TimeUnit.MILLISECONDS);
@@ -164,13 +199,13 @@ public class ExecutorsFive {
     public static void notMain(String[] args) {
 
         Thread blue = new Thread(
-                ExecutorsFive::countDown,  ThreadColor.ANSI_BLUE.name());
+                ExecutorsSix::countDown,  ThreadColor.ANSI_BLUE.name());
 
         Thread yellow = new Thread(
-                ExecutorsFive::countDown, ThreadColor.ANSI_YELLOW.name());
+                ExecutorsSix::countDown, ThreadColor.ANSI_YELLOW.name());
 
         Thread red = new Thread(
-                ExecutorsFive::countDown, ThreadColor.ANSI_RED.name());
+                ExecutorsSix::countDown, ThreadColor.ANSI_RED.name());
 
         // Arranging start and join respectively will produce synchronous output, one after another.
         blue.start();
